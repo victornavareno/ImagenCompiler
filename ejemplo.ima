@@ -1,2 +1,63 @@
-figura circulo1 circulo color rojo posicion (100, 100) radio 50
-figura rect1 rectangulo color azul posicion (200, 200) base 100 altura 50
+// Fichero con algunos ejemplos de la versión básica sin errores
+// No incluye la estructura de control Si 
+
+VARIABLES
+
+Entero xx, yy, zz
+
+Real tiempo := 0.75
+
+xx := 200
+ yy := 100
+
+
+FIGURAS
+
+// Para la imagen 1
+Figura01 := <cuadrado, xx, yy, 100, rojo>
+
+// Para la imagen 2
+Figura02 := <rectangulo, yy, yy, 2*yy, 2*yy, azul>
+Circular := <circulo, 300, 300, 200, naranja>
+
+
+IMAGEN (1000, 1000, "IMAGEN 1")
+poner Figura01
+pausa tiempo
+borrar Figura01
+horizontal Figura01 100
+vertical Figura01 100
+poner Figura01
+
+
+
+pausa 2*tiempo
+borrar Figura01
+horizontal Figura01 100
+vertical Figura01 100
+poner Figura01
+horizontal Figura01 100
+vertical Figura01 100
+pausa 3*tiempo
+poner Figura01
+pausa .3
+FINIMAGEN
+
+
+IMAGEN (800, 600, "IMAGEN 2")
+ 	poner Circular
+ 	horizontal Circular yy
+ 	poner Circular
+ 	horizontal Circular -2*yy
+ 	poner Circular
+ 	
+ 	poner Figura02
+ 	pausa 2.
+ 	borrar Figura02
+ 	pausa 1.1
+ 	borrar Circular
+
+FINIMAGEN
+
+
+// Y con esto acaba el programa
