@@ -3,7 +3,8 @@
 Alumno: Víctor Andrés Navareño Moza
 
 
-Para compilar la entrega, asegúrate de estar en el directorio del proyecto y ejecuta:
+Esta primera fase del proyecto consiste solo en un analizador sintáctico básico que detectará la sintaxis del lenguaje IMAGEN. No detecta comentarios ni estructuras avanzadas, solo palabras básicas de la sintaxis imagen según lo indicado en la fase 1 de la entrega.
+Para compilar esta primera entrega, asegúrate de estar en el directorio del proyecto y ejecuta:
 make
 Esto generará el ejecutable imagen.
 
