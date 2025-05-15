@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include "tabla_simbolos.h"
 
 extern int yyparse();
 extern FILE* yyin;
+
+tipo_tabla TS;
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -15,6 +18,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    iniciar(&TS);
     yyparse();
     fclose(yyin);
     return 0;
