@@ -6,44 +6,59 @@
 
 %%
 
-[ \t\r\n]+                ;
+[ \t\r]+                ;
+"//".*                  ;
+\n                      return '\n';
 
-"Variables"               return VARIABLES;
-"entero"                  return ENTERO;
-"real"                    return REAL;
-"Figuras"                 return FIGURAS;
-"Imagen"                  return IMAGEN;
-"FinImagen"               return FINIMAGEN;
-"Poner"                   return PONER;
-"Borrar"                  return BORRAR;
-"Horizontal"              return HORIZONTAL;
-"Vertical"                return VERTICAL;
-"Pausa"                   return PAUSA;
+"VARIABLES"            return VARIABLES;
+"Entero"               return ENTERO;
+"Real"                 return REAL;
+"Bool"                 return BOOL;
 
-"circulo"                 return CIRCULO;
-"rectangulo"              return RECTANGULO;
-"cuadrado"                return CUADRADO;
+"FIGURAS"              return FIGURAS;
+"Imagen"               return IMAGEN;
+"FINIMAGEN"            return FINIMAGEN;
 
-"rojo"                    return ROJO;
-"verde"                   return VERDE;
-"azul"                    return AZUL;
-"naranja"                 return NARANJA;
+"poner"                return PONER;
+"borrar"               return BORRAR;
+"horizontal"           return HORIZONTAL;
+"vertical"             return VERTICAL;
+"pausa"                return PAUSA;
 
-":"                       return DOSPUNTOS;
-";"                       return PUNTOYCOMA;
-","                       return COMA;
-"("                       return PAR_IZQ;
-")"                       return PAR_DER;
-"="                       return ASIGNACION;
-"-"                       return MENOS;
-"*"                       return POR;
+"cierto"               return TRUE;
+"falso"                return FALSE;
+"=="                   return IGUAL;
+"&&"                   return AND;
 
-[0-9]+\.[0-9]+            { yylval.real = atof(yytext); return NUMREAL; }
-[0-9]+                    { yylval.entero = atoi(yytext); return NUM; }
-\"[^\"]*\"                { yylval.str = strdup(yytext); return CADENA; }
-[a-zA-Z_][a-zA-Z0-9_]*    { yylval.str = strdup(yytext); return IDENTIFICADOR; }
+"cuadrado"             return CUADRADO;
+"rectangulo"           return RECTANGULO;
+"circulo"              return CIRCULO;
 
-.                         { printf("Caracter inesperado: %s\n", yytext); }
+"rojo"                 return ROJO;
+"verde"                return VERDE;
+"azul"                 return AZUL;
+"naranja"              return NARANJA;
+"marron"               return MARRON;
+"amarillo"             return AMARILLO;
+"negro"                return NEGRO;
+"gris"                 return GRIS;
+
+":="                   return ASIGNACION;
+","                    return COMA;
+"("                    return PAR_IZQ;
+")"                    return PAR_DER;
+
+"+"                    return '+';
+"-"                    return '-';
+"*"                    return '*';
+"/"                    return '/';
+
+[0-9]+\.[0-9]+         { yylval.real = atof(yytext); return NUMREAL; }
+[0-9]+                 { yylval.entero = atoi(yytext); return NUM; }
+\"[^\"]*\"             { yylval.str = strdup(yytext); return CADENA; }
+[a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFICADOR; }
+
+.                      return yytext[0];
 
 %%
 

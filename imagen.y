@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "tabla_simbolos.h"
 
 int yylex(void);
 void yyerror(const char *s);
@@ -12,123 +14,116 @@ void yyerror(const char *s);
     float real;
 }
 
-// TOKENS CON TIPOS
 %token <entero> NUM
 %token <real> NUMREAL
 %token <str> IDENTIFICADOR
+%token <str> CADENA
 
-// Palabras clave
-%token VARIABLES ENTERO REAL FIGURAS IMAGEN FINIMAGEN
+%token VARIABLES ENTERO REAL BOOL
+%token FIGURAS IMAGEN FINIMAGEN
 %token PONER BORRAR HORIZONTAL VERTICAL PAUSA
-
-// Tipos de figuras y colores
 %token CIRCULO RECTANGULO CUADRADO
-%token ROJO VERDE AZUL NARANJA
+%token ROJO VERDE AZUL NARANJA MARRON AMARILLO NEGRO GRIS
+%token TRUE FALSE IGUAL AND
+%token COMA PAR_IZQ PAR_DER ASIGNACION
 
-// Símbolos
-%token COMA DOSPUNTOS PUNTOYCOMA PAR_IZQ PAR_DER
-%token ASIGNACION
-%token MENOS POR
-%token CADENA
-
-// Prioridad de operaciones (si las usas)
 %left '+' '-'
 %left '*' '/'
 
-%type <entero> expresion_entera
-%type <real> expresion_real
+%type <real> expresion
 
 %%
 
 programa:
-    seccion_variables seccion_figuras lista_imagenes
+    saltos opt_variables saltos seccion_figuras saltos lista_imagenes saltos
 ;
 
-seccion_variables:
-    VARIABLES lista_declaraciones
+saltos:
+    /* vacío */ | saltos '\n'
+;
+
+opt_variables:
+    /* vacío */ | VARIABLES saltos lista_declaraciones
 ;
 
 lista_declaraciones:
-    declaracion
-    | lista_declaraciones declaracion
+    declaracion salto
+  | lista_declaraciones declaracion salto
 ;
 
 declaracion:
     tipo lista_identificadores
-    | IDENTIFICADOR ASIGNACION expresion
+  | tipo IDENTIFICADOR ASIGNACION expresion
+  | IDENTIFICADOR ASIGNACION expresion
 ;
 
 tipo:
-    ENTERO
-    | REAL
+    ENTERO | REAL | BOOL
 ;
 
 lista_identificadores:
     IDENTIFICADOR
-    | lista_identificadores COMA IDENTIFICADOR
-;
-
-expresion:
-    expresion_entera
-    | expresion_real
-;
-
-expresion_entera:
-    NUM
-    | IDENTIFICADOR { $$ = atoi($1); }  // convierte string a entero
-;
-
-expresion_real:
-    NUMREAL
-    | IDENTIFICADOR { $$ = atof($1); }  // convierte string a real
+  | lista_identificadores COMA IDENTIFICADOR
 ;
 
 seccion_figuras:
-    FIGURAS lista_figuras
+    FIGURAS saltos lista_figuras
 ;
 
 lista_figuras:
     figura
-    | lista_figuras figura
+  | lista_figuras saltos figura
 ;
 
 figura:
-    IDENTIFICADOR ASIGNACION PAR_IZQ tipo_figura COMA expresion COMA expresion COMA expresion COMA color PAR_DER
-    | IDENTIFICADOR ASIGNACION PAR_IZQ tipo_figura COMA expresion COMA expresion COMA expresion COMA expresion COMA color PAR_DER
+    IDENTIFICADOR ASIGNACION PAR_IZQ tipo_figura lista_parametros COMA color PAR_DER
+;
+
+lista_parametros:
+      expresion COMA expresion COMA expresion
+    | expresion COMA expresion COMA expresion COMA expresion
 ;
 
 tipo_figura:
-    CIRCULO
-    | RECTANGULO
-    | CUADRADO
+    CIRCULO | RECTANGULO | CUADRADO
 ;
 
 color:
-    ROJO | VERDE | AZUL | NARANJA
+    ROJO | VERDE | AZUL | NARANJA | MARRON | AMARILLO | NEGRO | GRIS
 ;
 
 lista_imagenes:
     imagen
-    | lista_imagenes imagen
+  | lista_imagenes saltos imagen
 ;
 
 imagen:
-    IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER
-    lista_acciones
-    FINIMAGEN
+    IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER saltos lista_acciones FINIMAGEN
 ;
 
 lista_acciones:
     instruccion
-    | lista_acciones instruccion
+  | lista_acciones salto instruccion
 ;
 
 instruccion:
     PONER IDENTIFICADOR
-    | BORRAR IDENTIFICADOR
-    | HORIZONTAL IDENTIFICADOR expresion
-    | VERTICAL IDENTIFICADOR expresion
-    | PAUSA expresion
+  | BORRAR IDENTIFICADOR
+  | HORIZONTAL IDENTIFICADOR expresion
+  | VERTICAL IDENTIFICADOR expresion
+  | PAUSA expresion
+  | IDENTIFICADOR ASIGNACION expresion
+;
+
+expresion:
+      NUM            { $$ = (float)$1; }
+    | NUMREAL        { $$ = $1; }
+    | IDENTIFICADOR  { $$ = 0; }
+    | expresion '+' expresion { $$ = $1 + $3; }
+    | expresion '-' expresion { $$ = $1 - $3; }
+    | expresion '*' expresion { $$ = $1 * $3; }
+    | expresion '/' expresion { $$ = $1 / $3; }
+    | PAR_IZQ expresion PAR_DER { $$ = $2; }
 ;
 
 %%

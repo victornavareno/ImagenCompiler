@@ -4,7 +4,7 @@ imagen: imagen.tab.o lex.yy.o main.o
 	$(CC) -o imagen imagen.tab.o lex.yy.o main.o
 
 imagen.tab.c imagen.tab.h: imagen.y
-	bison -d imagen.y
+	bison -v -d imagen.y
 
 lex.yy.c: imagen.l imagen.tab.h
 	flex imagen.l
