@@ -63,7 +63,7 @@
 "falso"                return FALSE;
 
 \"[^\"]*\"             { yylval.str = strdup(yytext); return CADENA; }
-[0-9]+\.[0-9]+         { yylval.real = atof(yytext); return NUMREAL; }
+[0-9]+\.[0-9]*         { yylval.real = atof(yytext); return NUMREAL; }
 [0-9]+                 { yylval.entero = atoi(yytext); return NUM; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFICADOR; }
 
