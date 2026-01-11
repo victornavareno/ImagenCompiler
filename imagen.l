@@ -1,3 +1,4 @@
+%option yylineno
 %{
 #include "imagen.tab.h"
 #include <string.h>
@@ -25,10 +26,11 @@
 "vertical"             return VERTICAL;
 "pausa"                return PAUSA;
 
-"cierto"               return TRUE;
-"falso"                return FALSE;
-"=="                   return IGUAL;
-"&&"                   return AND;
+"si"                   return SI;
+"si_no"                return SI_NO;
+"repetir"              return REPE;
+"{"                    return LLLAVE;
+"}"                    return RLLAVE;
 
 "cuadrado"             return CUADRADO;
 "rectangulo"           return RECTANGULO;
@@ -47,15 +49,22 @@
 ","                    return COMA;
 "("                    return PAR_IZQ;
 ")"                    return PAR_DER;
+"<"                    return MENOR;
+">"                    return MAYOR;
 
 "+"                    return '+';
 "-"                    return '-';
 "*"                    return '*';
 "/"                    return '/';
+"=="                   return IGUAL;
+"&&"                   return AND;
 
+"cierto"               return TRUE;
+"falso"                return FALSE;
+
+\"[^\"]*\"             { yylval.str = strdup(yytext); return CADENA; }
 [0-9]+\.[0-9]+         { yylval.real = atof(yytext); return NUMREAL; }
 [0-9]+                 { yylval.entero = atoi(yytext); return NUM; }
-\"[^\"]*\"             { yylval.str = strdup(yytext); return CADENA; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFICADOR; }
 
 .                      return yytext[0];

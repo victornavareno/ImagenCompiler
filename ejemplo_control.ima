@@ -1,0 +1,39 @@
+VARIABLES
+
+Entero x, y
+Real tiempo := 0.5
+
+x := 100
+
+y := 150
+
+FIGURAS
+
+Cuad := <cuadrado, x, y, 50, rojo>
+
+IMAGEN (500, 500, "TEST IF")
+poner Cuad
+
+si (x == 100) {
+    horizontal Cuad 50
+    pausa 1
+}
+
+si (x == 200) {
+    vertical Cuad 50
+}
+si_no {
+    pausa 2
+    borrar Cuad
+}
+
+FINIMAGEN
+
+IMAGEN (500, 500, "TEST REPETIR")
+poner Cuad
+repetir 3 {
+    horizontal Cuad 10
+    vertical Cuad 10
+    pausa tiempo
+}
+FINIMAGEN

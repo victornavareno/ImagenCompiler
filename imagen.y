@@ -4,6 +4,7 @@
 #include <string.h>
 #include "tabla_simbolos.h"
 
+extern int yylineno;
 int yylex(void);
 void yyerror(const char *s);
 %}
@@ -24,13 +25,20 @@ void yyerror(const char *s);
 %token PONER BORRAR HORIZONTAL VERTICAL PAUSA
 %token CIRCULO RECTANGULO CUADRADO
 %token ROJO VERDE AZUL NARANJA MARRON AMARILLO NEGRO GRIS
+
+%token SI SI_NO REPE LLLAVE RLLAVE
 %token TRUE FALSE IGUAL AND
+%token MENOR MAYOR
+
 %token COMA PAR_IZQ PAR_DER ASIGNACION
 
 %left '+' '-'
 %left '*' '/'
+%left AND
+%nonassoc IGUAL
 
 %type <real> expresion
+%type <entero> expresion_booleana
 
 %%
 
@@ -39,16 +47,18 @@ programa:
 ;
 
 saltos:
-    /* vacío */ | saltos '\n'
+    /* vacío */
+  | saltos '\n'
 ;
 
 opt_variables:
-    /* vacío */ | VARIABLES saltos lista_declaraciones
+    /* vacío */
+  | VARIABLES saltos lista_declaraciones
 ;
 
 lista_declaraciones:
-    declaracion salto
-  | lista_declaraciones declaracion salto
+    declaracion saltos
+  | lista_declaraciones declaracion saltos
 ;
 
 declaracion:
@@ -67,7 +77,7 @@ lista_identificadores:
 ;
 
 seccion_figuras:
-    FIGURAS saltos lista_figuras
+    FIGURAS saltos lista_figuras saltos
 ;
 
 lista_figuras:
@@ -76,16 +86,16 @@ lista_figuras:
 ;
 
 figura:
-    IDENTIFICADOR ASIGNACION PAR_IZQ tipo_figura lista_parametros COMA color PAR_DER
+    IDENTIFICADOR ASIGNACION MENOR tipo_figura3 COMA expresion COMA expresion COMA expresion COMA color MAYOR
+  | IDENTIFICADOR ASIGNACION MENOR tipo_figura4 COMA expresion COMA expresion COMA expresion COMA expresion COMA color MAYOR
 ;
 
-lista_parametros:
-      expresion COMA expresion COMA expresion
-    | expresion COMA expresion COMA expresion COMA expresion
+tipo_figura3:
+    CUADRADO | CIRCULO
 ;
 
-tipo_figura:
-    CIRCULO | RECTANGULO | CUADRADO
+tipo_figura4:
+    RECTANGULO
 ;
 
 color:
@@ -103,16 +113,19 @@ imagen:
 
 lista_acciones:
     instruccion
-  | lista_acciones salto instruccion
+  | lista_acciones '\n' instruccion
 ;
 
 instruccion:
-    PONER IDENTIFICADOR
-  | BORRAR IDENTIFICADOR
-  | HORIZONTAL IDENTIFICADOR expresion
-  | VERTICAL IDENTIFICADOR expresion
-  | PAUSA expresion
-  | IDENTIFICADOR ASIGNACION expresion
+      PONER IDENTIFICADOR
+    | BORRAR IDENTIFICADOR
+    | HORIZONTAL IDENTIFICADOR expresion
+    | VERTICAL IDENTIFICADOR expresion
+    | PAUSA expresion
+    | IDENTIFICADOR ASIGNACION expresion
+    | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE lista_acciones RLLAVE
+    | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE lista_acciones RLLAVE SI_NO LLLAVE lista_acciones RLLAVE
+    | REPE expresion LLLAVE lista_acciones RLLAVE
 ;
 
 expresion:
@@ -126,8 +139,15 @@ expresion:
     | PAR_IZQ expresion PAR_DER { $$ = $2; }
 ;
 
+expresion_booleana:
+      TRUE { $$ = 1; }
+    | FALSE { $$ = 0; }
+    | expresion IGUAL expresion { $$ = ($1 == $3); }
+    | expresion_booleana AND expresion_booleana { $$ = $1 && $3; }
+;
+
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Error de sintaxis: %s\n", s);
+    fprintf(stderr, "Error de sintaxis en línea %d: %s\n", yylineno, s);
 }
