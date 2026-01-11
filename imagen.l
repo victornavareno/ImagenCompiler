@@ -17,7 +17,7 @@
 "Bool"                 return BOOL;
 
 "FIGURAS"              return FIGURAS;
-"Imagen"               return IMAGEN;
+"IMAGEN"               return IMAGEN;
 "FINIMAGEN"            return FINIMAGEN;
 
 "poner"                return PONER;
@@ -63,7 +63,8 @@
 "falso"                return FALSE;
 
 \"[^\"]*\"             { yylval.str = strdup(yytext); return CADENA; }
-[0-9]+\.[0-9]*         { yylval.real = atof(yytext); return NUMREAL; }
+[0-9]+\.[0-9]*         { yylval.real = atof(yytext); return NUMREAL; }  /* por ejemplo: 3.3 o 4.*/
+\.[0-9]+                { yylval.real = atof(yytext); return NUMREAL; } /* por ejemplo: .3 */
 [0-9]+                 { yylval.entero = atoi(yytext); return NUM; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFICADOR; }
 
