@@ -1,6 +1,6 @@
 ## Proyecto IMAGEN (Fase 1)
 
-Alumno: Víctor Andrés Navareño Moza
+Víctor Navareño 
 
 
 Esta primera fase del proyecto consiste solo en un analizador sintáctico básico que detectará la sintaxis del lenguaje IMAGEN. No detecta comentarios ni estructuras avanzadas, solo palabras básicas de la sintaxis imagen según lo indicado en la fase 1 de la entrega.
