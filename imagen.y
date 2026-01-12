@@ -36,20 +36,35 @@ void yyerror(const char *s);
 %left '*' '/'
 %left AND
 %nonassoc IGUAL
+%right UMINUS
 
 %type <real> expresion
 %type <entero> expresion_booleana
 
+%start programa
+
 %%
 
+/* === ESTRUCTURA PRINCIPAL === */
+/* Eliminamos saltos redundantes. Usamos opt_saltos para limpiar basura entre secciones */
+
 programa:
-    saltos opt_variables saltos seccion_figuras saltos lista_imagenes saltos
+    opt_saltos opt_variables opt_saltos seccion_figuras opt_saltos lista_imagenes opt_saltos
 ;
 
+/* Definición de saltos NO VACÍA para evitar bucles infinitos en Bison */
 saltos:
-    /* vacío */
+    '\n'
   | saltos '\n'
 ;
+
+/* Definición auxiliar para saltos que pueden no estar */
+opt_saltos:
+    /* vacío */
+  | saltos
+;
+
+/* === VARIABLES === */
 
 opt_variables:
     /* vacío */
@@ -57,8 +72,8 @@ opt_variables:
 ;
 
 lista_declaraciones:
-    declaracion saltos
-  | lista_declaraciones declaracion saltos
+    declaracion opt_saltos
+  | lista_declaraciones declaracion opt_saltos
 ;
 
 declaracion:
@@ -76,13 +91,16 @@ lista_identificadores:
   | lista_identificadores COMA IDENTIFICADOR
 ;
 
+/* === FIGURAS === */
+
 seccion_figuras:
-    FIGURAS saltos lista_figuras saltos
+    FIGURAS saltos lista_figuras
 ;
 
+/* CAMBIO CLAVE: La figura lleva el salto pegado al final, no como separador intermedio */
 lista_figuras:
-    figura
-  | lista_figuras saltos figura
+    figura opt_saltos
+  | lista_figuras figura opt_saltos
 ;
 
 figura:
@@ -102,41 +120,47 @@ color:
     ROJO | VERDE | AZUL | NARANJA | MARRON | AMARILLO | NEGRO | GRIS
 ;
 
+/* === IMAGENES === */
+
 lista_imagenes:
-    imagen
-  | lista_imagenes saltos imagen
+    imagen opt_saltos
+  | lista_imagenes imagen opt_saltos
 ;
 
 imagen:
-    IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER saltos lista_acciones FINIMAGEN
+    /* Usamos opt_saltos antes de las acciones por si hay hueco */
+    IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER opt_saltos lista_acciones FINIMAGEN
 ;
 
 lista_acciones:
-    instruccion
-  | lista_acciones '\n' instruccion
+    instruccion opt_saltos
+  | lista_acciones instruccion opt_saltos
 ;
 
 instruccion:
-      PONER IDENTIFICADOR
-    | BORRAR IDENTIFICADOR
-    | HORIZONTAL IDENTIFICADOR expresion
-    | VERTICAL IDENTIFICADOR expresion
-    | PAUSA expresion
-    | IDENTIFICADOR ASIGNACION expresion
-    | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE lista_acciones RLLAVE
-    | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE lista_acciones RLLAVE SI_NO LLLAVE lista_acciones RLLAVE
-    | REPE expresion LLLAVE lista_acciones RLLAVE
+    PONER IDENTIFICADOR
+  | BORRAR IDENTIFICADOR
+  | HORIZONTAL IDENTIFICADOR expresion
+  | VERTICAL IDENTIFICADOR expresion
+  | PAUSA expresion
+  | IDENTIFICADOR ASIGNACION expresion
+  | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE opt_saltos lista_acciones RLLAVE
+  | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE opt_saltos lista_acciones RLLAVE SI_NO LLLAVE opt_saltos lista_acciones RLLAVE
+  | REPE expresion LLLAVE opt_saltos lista_acciones RLLAVE
 ;
 
+/* === EXPRESIONES === */
+
 expresion:
-      NUM            { $$ = (float)$1; }
-    | NUMREAL        { $$ = $1; }
-    | IDENTIFICADOR  { $$ = 0; }
+      NUM             { $$ = (float)$1; }
+    | NUMREAL         { $$ = $1; }
+    | IDENTIFICADOR   { $$ = 0; }
     | expresion '+' expresion { $$ = $1 + $3; }
     | expresion '-' expresion { $$ = $1 - $3; }
     | expresion '*' expresion { $$ = $1 * $3; }
     | expresion '/' expresion { $$ = $1 / $3; }
     | PAR_IZQ expresion PAR_DER { $$ = $2; }
+    | '-' expresion %prec UMINUS { $$ = -$2; }
 ;
 
 expresion_booleana:
