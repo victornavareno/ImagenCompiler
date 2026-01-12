@@ -46,19 +46,19 @@ void yyerror(const char *s);
 %%
 
 /* === ESTRUCTURA PRINCIPAL === */
-/* Eliminamos saltos redundantes. Usamos opt_saltos para limpiar basura entre secciones */
+/* usa opt_saltos para saltos entre secciones */
 
 programa:
     opt_saltos opt_variables opt_saltos seccion_figuras opt_saltos lista_imagenes opt_saltos
 ;
 
-/* Definición de saltos NO VACÍA para evitar bucles infinitos en Bison */
+/* definimos saltos NO VACÍA para evitar bucles infinitos en Bison */
 saltos:
     '\n'
   | saltos '\n'
 ;
 
-/* Definición auxiliar para saltos que pueden no estar */
+/*  definimos auxiliar para saltos que pueden no estar */
 opt_saltos:
     /* vacío */
   | saltos
@@ -97,7 +97,6 @@ seccion_figuras:
     FIGURAS saltos lista_figuras
 ;
 
-/* CAMBIO CLAVE: La figura lleva el salto pegado al final, no como separador intermedio */
 lista_figuras:
     figura opt_saltos
   | lista_figuras figura opt_saltos
