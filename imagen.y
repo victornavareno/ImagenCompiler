@@ -49,37 +49,35 @@ void yyerror(const char *s);
 /* usa opt_saltos para saltos entre secciones */
 
 programa:
-    opt_saltos opt_variables opt_saltos seccion_figuras opt_saltos lista_imagenes opt_saltos
+    opt_saltos opt_variables seccion_figuras lista_imagenes
 ;
 
-/* definimos saltos NO VACÍA para evitar bucles infinitos en Bison */
+/* definimos saltos NO VACIA para evitar bucles infinitos en Bison */
 saltos:
     '\n'
   | saltos '\n'
 ;
 
-/*  definimos auxiliar para saltos que pueden no estar */
 opt_saltos:
-    /* vacío */
-  | saltos
+  | opt_saltos '\n'
 ;
 
 /* === VARIABLES === */
 
 opt_variables:
-    /* vacío */
   | VARIABLES saltos lista_declaraciones
 ;
 
 lista_declaraciones:
-    declaracion opt_saltos
-  | lista_declaraciones declaracion opt_saltos
+    declaracion
+  | lista_declaraciones declaracion
 ;
 
 declaracion:
-    tipo lista_identificadores
-  | tipo IDENTIFICADOR ASIGNACION expresion
-  | IDENTIFICADOR ASIGNACION expresion
+    tipo lista_identificadores saltos
+  | tipo IDENTIFICADOR ASIGNACION expresion saltos      // int x := 3 tabla de simbolos: guardar identificador tipo y valor, 
+                                                            hacer 2 tablas de símbolos, una para variables y otra para figuras
+  | IDENTIFICADOR ASIGNACION expresion saltos
 ;
 
 tipo:
@@ -98,13 +96,13 @@ seccion_figuras:
 ;
 
 lista_figuras:
-    figura opt_saltos
-  | lista_figuras figura opt_saltos
+    figura 
+  | lista_figuras figura
 ;
 
 figura:
-    IDENTIFICADOR ASIGNACION MENOR tipo_figura3 COMA expresion COMA expresion COMA expresion COMA color MAYOR
-  | IDENTIFICADOR ASIGNACION MENOR tipo_figura4 COMA expresion COMA expresion COMA expresion COMA expresion COMA color MAYOR
+    IDENTIFICADOR ASIGNACION MENOR tipo_figura3 COMA expresion COMA expresion COMA expresion COMA color MAYOR saltos
+  | IDENTIFICADOR ASIGNACION MENOR tipo_figura4 COMA expresion COMA expresion COMA expresion COMA expresion COMA color MAYOR saltos
 ;
 
 tipo_figura3:
@@ -162,11 +160,12 @@ expresion:
     | '-' expresion %prec UMINUS { $$ = -$2; }
 ;
 
+/* solo se permiten identificadores en expresiones aritmeticas * /
 expresion_booleana:
       TRUE { $$ = 1; }
     | FALSE { $$ = 0; }
     | expresion IGUAL expresion { $$ = ($1 == $3); }
-    | expresion_booleana AND expresion_booleana { $$ = $1 && $3; }
+    | expresion_booleana AND expresion_booleana { $$ = $1 && $3; }  / * añadir expresiones booleanas */
 ;
 
 %%
