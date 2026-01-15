@@ -22,10 +22,6 @@ si (x == 100) {
 si (x == 200) {
     vertical Cuad 50
 }
-si_no {
-    pausa 2
-    borrar Cuad
-}
 
 FINIMAGEN
 
