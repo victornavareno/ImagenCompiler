@@ -18,8 +18,29 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Inicializamos la tabla de simbolos
     iniciar(&TS);
+
+    // 2. IMPRIMIMOS LA CABECERA DEL CÓDIGO C++
+    // Esto es lo que permite que el output sea un programa válido
+    printf("// Codigo generado por el traductor IMAGEN\n");
+    printf("#include \"imagen.h\"\n");
+    printf("#include <allegro5/allegro5.h>\n\n");
+    printf("using namespace std;\n\n");
+    
+    printf("int main() {\n");
+    printf("    // Iniciar entorno grafico\n");
+    printf("    iniciarImagen();\n\n");
+
+    // El parser generara el codigo c++
     yyparse();
+
+
+    printf("\n    // Finalizar entorno grafico\n");
+    printf("    terminarImagen();\n");
+    printf("    return 0;\n");
+    printf("}\n");
+
     fclose(yyin);
     return 0;
 }

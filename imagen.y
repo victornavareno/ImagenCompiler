@@ -2,17 +2,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h> 
+#include <stdbool.h> 
 #include "tabla_simbolos.h"
 
 extern int yylineno;
 int yylex(void);
 void yyerror(const char *s);
+
+/* Tabla de Símbolos Global */
+extern tipo_tabla TS;
+
+/* Funcion auxiliar para concatenar cadenas */
+char* generar_cadena(const char* formato, ...) {
+    char buffer[1024];
+    va_list args;
+    va_start(args, formato);
+    vsnprintf(buffer, 1024, formato, args);
+    va_end(args);
+    return strdup(buffer);
+}
+
+/* Constantes para tipo de figuras */
+#define F_CUADRADO 0
+#define F_RECTANGULO 1
+#define F_CIRCULO 2
+
 %}
+
+/* STRUCT PARA EXPRESIONES */
+%code requires {
+    #include <stdbool.h>
+    
+    typedef struct {
+        char* codigo;  
+        bool esReal;   
+    } info_expr;
+}
 
 %union {
     char* str;
     int entero;
     float real;
+    info_expr expr;  
 }
 
 %token <entero> NUM
@@ -38,33 +70,36 @@ void yyerror(const char *s);
 %nonassoc IGUAL
 %right UMINUS
 
-%type <real> expresion
-%type <entero> expresion_booleana
+/* === TIPOS ACTUALIZADOS === */
+%type <expr> expresion
+%type <str> expresion_booleana /* ¡IMPORTANTE! Debe ser string para escribir el if */
+%type <entero> tipo_figura3 tipo_figura4
+%type <str> color
 
 %start programa
 
 %%
 
 /* === ESTRUCTURA PRINCIPAL === */
-/* usa opt_saltos para saltos entre secciones */
 
 programa:
     opt_saltos opt_variables seccion_figuras lista_imagenes
 ;
 
-/* definimos saltos NO VACIA para evitar bucles infinitos en Bison */
 saltos:
     '\n'
   | saltos '\n'
 ;
 
 opt_saltos:
+    /* vacío */
   | opt_saltos '\n'
 ;
 
 /* === VARIABLES === */
 
 opt_variables:
+    /* vacío */
   | VARIABLES saltos lista_declaraciones
 ;
 
@@ -74,19 +109,38 @@ lista_declaraciones:
 ;
 
 declaracion:
-    tipo lista_identificadores saltos
-  | tipo IDENTIFICADOR ASIGNACION expresion saltos      // int x := 3 tabla de simbolos: guardar identificador tipo y valor, 
-                                                            hacer 2 tablas de símbolos, una para variables y otra para figuras
+    tipo lista_identificadores saltos 
+    { 
+        printf(";\n"); 
+    }
+  | tipo IDENTIFICADOR ASIGNACION expresion saltos
+    {
+        printf(" %s = %s;\n", $2, $4.codigo);
+        tipo_datoTS d; strcpy(d.identificador, $2); d.tipo = T_ENTERO; insertar(&TS, d); 
+    }
   | IDENTIFICADOR ASIGNACION expresion saltos
+    {
+        printf("    %s = %s;\n", $1, $3.codigo);
+    }
 ;
 
 tipo:
-    ENTERO | REAL | BOOL
+    ENTERO { printf("    int "); }
+  | REAL   { printf("    float "); }
+  | BOOL   { printf("    bool "); }
 ;
 
 lista_identificadores:
     IDENTIFICADOR
+    {
+        printf("%s", $1);
+        tipo_datoTS d; strcpy(d.identificador, $1); d.tipo = T_ENTERO; insertar(&TS, d);
+    }
   | lista_identificadores COMA IDENTIFICADOR
+    {
+        printf(", %s", $3);
+        tipo_datoTS d; strcpy(d.identificador, $3); d.tipo = T_ENTERO; insertar(&TS, d);
+    }
 ;
 
 /* === FIGURAS === */
@@ -102,22 +156,39 @@ lista_figuras:
 
 figura:
     IDENTIFICADOR ASIGNACION MENOR tipo_figura3 COMA expresion COMA expresion COMA expresion COMA color MAYOR saltos
+    {
+        tipo_datoTS d; strcpy(d.identificador, $1); d.tipo = T_FIGURA;
+        d.valor.valor_figura.subtipo = $4;
+        strcpy(d.valor.valor_figura.p1, $6.codigo);  
+        strcpy(d.valor.valor_figura.p2, $8.codigo);  
+        strcpy(d.valor.valor_figura.p3, $10.codigo); 
+        strcpy(d.valor.valor_figura.color, $12);     
+        insertar(&TS, d);
+    }
   | IDENTIFICADOR ASIGNACION MENOR tipo_figura4 COMA expresion COMA expresion COMA expresion COMA expresion COMA color MAYOR saltos
+    {
+        tipo_datoTS d; strcpy(d.identificador, $1); d.tipo = T_FIGURA;
+        d.valor.valor_figura.subtipo = $4;
+        strcpy(d.valor.valor_figura.p1, $6.codigo);
+        strcpy(d.valor.valor_figura.p2, $8.codigo);
+        strcpy(d.valor.valor_figura.p3, $10.codigo); 
+        strcpy(d.valor.valor_figura.p4, $12.codigo); 
+        strcpy(d.valor.valor_figura.color, $14);
+        insertar(&TS, d);
+    }
 ;
 
-tipo_figura3:
-    CUADRADO | CIRCULO
-;
-
-tipo_figura4:
-    RECTANGULO
-;
+tipo_figura3: CUADRADO { $$ = F_CUADRADO; } | CIRCULO { $$ = F_CIRCULO; };
+tipo_figura4: RECTANGULO { $$ = F_RECTANGULO; };
 
 color:
-    ROJO | VERDE | AZUL | NARANJA | MARRON | AMARILLO | NEGRO | GRIS
+    ROJO { $$ = strdup("ROJO"); } | VERDE { $$ = strdup("VERDE"); }
+  | AZUL { $$ = strdup("AZUL"); } | NARANJA { $$ = strdup("NARANJA"); }
+  | MARRON { $$ = strdup("MARRON"); } | AMARILLO { $$ = strdup("AMARILLO"); }
+  | NEGRO { $$ = strdup("NEGRO"); } | GRIS { $$ = strdup("GRIS"); }
 ;
 
-/* === IMAGENES === */
+/* === IMAGENES Y ACCIONES === */
 
 lista_imagenes:
     imagen opt_saltos
@@ -125,8 +196,15 @@ lista_imagenes:
 ;
 
 imagen:
-    /* Usamos opt_saltos antes de las acciones por si hay hueco */
-    IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER opt_saltos lista_acciones FINIMAGEN
+    IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER 
+    {
+        printf("\n    // Nueva Ventana: %s\n", $7);
+        printf("    nuevaVentanaImagen(%s, %s, %s);\n", $7, $3.codigo, $5.codigo);
+    }
+    opt_saltos lista_acciones FINIMAGEN
+    {
+        printf("    pausaImagen(1.5);\n");
+    }
 ;
 
 lista_acciones:
@@ -134,38 +212,102 @@ lista_acciones:
   | lista_acciones instruccion opt_saltos
 ;
 
+/* REGLA AUXILIAR PARA EVITAR CONFLICTOS R/R EN EL IF */
+cabecera_si:
+    SI PAR_IZQ expresion_booleana PAR_DER 
+    { 
+        printf("    if (%s) {\n", $3); 
+    }
+;
+
 instruccion:
     PONER IDENTIFICADOR
+    {
+        tipo_datoTS d;
+        if (buscar(TS, $2, &d) && d.tipo == T_FIGURA) {
+            if (d.valor.valor_figura.subtipo == F_RECTANGULO) {
+                printf("    rectanguloImagen(%s, %s, %s, %s, %s);\n", d.valor.valor_figura.p1, d.valor.valor_figura.p2, d.valor.valor_figura.p3, d.valor.valor_figura.p4, d.valor.valor_figura.color);
+            } else if (d.valor.valor_figura.subtipo == F_CUADRADO) {
+                printf("    rectanguloImagen(%s, %s, %s, %s, %s);\n", d.valor.valor_figura.p1, d.valor.valor_figura.p2, d.valor.valor_figura.p3, d.valor.valor_figura.p3, d.valor.valor_figura.color);
+            } else if (d.valor.valor_figura.subtipo == F_CIRCULO) {
+                printf("    circuloImagen(%s, %s, %s, %s);\n", d.valor.valor_figura.p1, d.valor.valor_figura.p2, d.valor.valor_figura.p3, d.valor.valor_figura.color);
+            }
+        }
+    }
   | BORRAR IDENTIFICADOR
+    {
+         tipo_datoTS d;
+         if (buscar(TS, $2, &d) && d.tipo == T_FIGURA) {
+             if (d.valor.valor_figura.subtipo == F_RECTANGULO) printf("    rectanguloImagen(%s, %s, %s, %s, BLANCO);\n", d.valor.valor_figura.p1, d.valor.valor_figura.p2, d.valor.valor_figura.p3, d.valor.valor_figura.p4);
+             else if (d.valor.valor_figura.subtipo == F_CUADRADO) printf("    rectanguloImagen(%s, %s, %s, %s, BLANCO);\n", d.valor.valor_figura.p1, d.valor.valor_figura.p2, d.valor.valor_figura.p3, d.valor.valor_figura.p3);
+             else if (d.valor.valor_figura.subtipo == F_CIRCULO) printf("    circuloImagen(%s, %s, %s, BLANCO);\n", d.valor.valor_figura.p1, d.valor.valor_figura.p2, d.valor.valor_figura.p3);
+         }
+    }
   | HORIZONTAL IDENTIFICADOR expresion
+    {
+        printf("    // Movimiento Horizontal de %s (Valor: %s)\n", $2, $3.codigo);
+    }
   | VERTICAL IDENTIFICADOR expresion
+    {
+        printf("    // Movimiento Vertical de %s (Valor: %s)\n", $2, $3.codigo);
+    }
   | PAUSA expresion
+    {
+        printf("    pausaImagen(%s);\n", $2.codigo);
+    }
   | IDENTIFICADOR ASIGNACION expresion
-  | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE opt_saltos lista_acciones RLLAVE
-  | SI PAR_IZQ expresion_booleana PAR_DER LLLAVE opt_saltos lista_acciones RLLAVE SI_NO LLLAVE opt_saltos lista_acciones RLLAVE
-  | REPE expresion LLLAVE opt_saltos lista_acciones RLLAVE
+    {
+        printf("    %s = %s;\n", $1, $3.codigo);
+    }
+    
+  /* --- ESTRUCTURAS DE CONTROL CORREGIDAS --- */
+  
+  /* Usamos cabecera_si para reutilizar la accion de imprimir 'if' */
+  | cabecera_si LLLAVE opt_saltos lista_acciones RLLAVE
+    { 
+        printf("    }\n"); 
+    }
+  | cabecera_si LLLAVE opt_saltos lista_acciones RLLAVE SI_NO 
+    { 
+        printf("    } else {\n"); 
+    }
+    LLLAVE opt_saltos lista_acciones RLLAVE
+    { 
+        printf("    }\n"); 
+    }
+    
+  | REPE expresion 
+    { printf("    for(int _i=0; _i < %s; _i++) {\n", $2.codigo); }
+    LLLAVE opt_saltos lista_acciones RLLAVE
+    { printf("    }\n"); }
 ;
 
 /* === EXPRESIONES === */
 
 expresion:
-      NUM             { $$ = (float)$1; }
-    | NUMREAL         { $$ = $1; }
-    | IDENTIFICADOR   { $$ = 0; }
-    | expresion '+' expresion { $$ = $1 + $3; }
-    | expresion '-' expresion { $$ = $1 - $3; }
-    | expresion '*' expresion { $$ = $1 * $3; }
-    | expresion '/' expresion { $$ = $1 / $3; }
-    | PAR_IZQ expresion PAR_DER { $$ = $2; }
-    | '-' expresion %prec UMINUS { $$ = -$2; }
+      NUM             { $$.codigo = generar_cadena("%d", $1); $$.esReal = false; }
+    | NUMREAL         { $$.codigo = generar_cadena("%.2f", $1); $$.esReal = true; }
+    | IDENTIFICADOR   { $$.codigo = strdup($1); $$.esReal = false; }
+    | expresion '+' expresion { $$.codigo = generar_cadena("%s + %s", $1.codigo, $3.codigo); $$.esReal = $1.esReal || $3.esReal; }
+    | expresion '-' expresion { $$.codigo = generar_cadena("%s - %s", $1.codigo, $3.codigo); $$.esReal = $1.esReal || $3.esReal; }
+    | expresion '*' expresion { $$.codigo = generar_cadena("%s * %s", $1.codigo, $3.codigo); $$.esReal = $1.esReal || $3.esReal; }
+    | expresion '/' expresion { $$.codigo = generar_cadena("%s / %s", $1.codigo, $3.codigo); $$.esReal = true; }
+    | PAR_IZQ expresion PAR_DER { $$.codigo = generar_cadena("(%s)", $2.codigo); $$.esReal = $2.esReal; }
+    | '-' expresion %prec UMINUS { $$.codigo = generar_cadena("-(%s)", $2.codigo); $$.esReal = $2.esReal; }
 ;
 
-/* solo se permiten identificadores en expresiones aritmeticas * /
+/* Expresiones booleanas: Ahora devuelven TEXTO C++ */
 expresion_booleana:
-      TRUE { $$ = 1; }
-    | FALSE { $$ = 0; }
-    | expresion IGUAL expresion { $$ = ($1 == $3); }
-    | expresion_booleana AND expresion_booleana { $$ = $1 && $3; }  / * añadir expresiones booleanas */
+      TRUE { $$ = strdup("true"); }
+    | FALSE { $$ = strdup("false"); }
+    | expresion IGUAL expresion 
+      { 
+          $$ = generar_cadena("%s == %s", $1.codigo, $3.codigo); 
+      }
+    | expresion_booleana AND expresion_booleana 
+      { 
+          $$ = generar_cadena("%s && %s", $1, $3); 
+      }
 ;
 
 %%

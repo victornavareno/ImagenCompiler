@@ -1,0 +1,26 @@
+# Fichero makeImagen
+# Para compilar y ejecutar un fichero .cpp resultante de la traducción de un 
+# fichero .ima
+
+# En la misma carpeta deben estar los ficheros de la librería imagen.h y imagen.cpp
+
+# Cambiar FUENTE con el nombre del fichero correspondiente
+
+# ejecutar con > make -f makeImagen
+
+FUENTE = ejemplo.cpp
+
+fin: prueba
+	./prueba 
+	
+prueba : prueba.o imagen.o 
+	g++ -oprueba imagen.o prueba.o -lallegro -lallegro_primitives -lallegro_main    
+
+imagen.o : imagen.cpp
+	g++ -c imagen.cpp
+
+prueba.o : $(FUENTE)
+	g++ -c -oprueba.o $(FUENTE) 
+
+clean :
+	rm -f *.o	
