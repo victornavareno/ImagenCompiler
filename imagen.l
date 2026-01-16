@@ -1,77 +1,93 @@
-%option yylineno
 %{
 #include "imagen.tab.h"
 #include <string.h>
 #include <stdlib.h>
+
+/* Función auxiliar para copiar texto de forma segura al array de Bison */
+void copiar_str(char* destino, const char* origen) {
+    strncpy(destino, origen, 99);
+    destino[99] = '\0'; // Asegurar fin de cadena
+}
 %}
 
+%option yylineno
+
 %%
 
-[ \t\r]+                ;
-"//".*                  ;
+[ \t\r]+                ; /* Ignorar espacios */
 \n                      return '\n';
 
-"VARIABLES"            return VARIABLES;
-"Entero"               return ENTERO;
-"Real"                 return REAL;
-"Bool"                 return BOOL;
+"//".* ; /* Comentarios: Ignorar hasta el enter */
 
-"FIGURAS"              return FIGURAS;
-"IMAGEN"               return IMAGEN;
-"FINIMAGEN"            return FINIMAGEN;
+"VARIABLES"             return VARIABLES;
+"Entero"                return ENTERO;
+"Real"                  return REAL;
+"Bool"                  return BOOL;
 
-"poner"                return PONER;
-"borrar"               return BORRAR;
-"horizontal"           return HORIZONTAL;
-"vertical"             return VERTICAL;
-"pausa"                return PAUSA;
+"FIGURAS"               return FIGURAS;
+"IMAGEN"                return IMAGEN;
+"FINIMAGEN"             return FINIMAGEN;
 
-"si"                   return SI;
-"si_no"                return SI_NO;
-"repetir"              return REPE;
-"{"                    return LLLAVE;
-"}"                    return RLLAVE;
+"poner"                 return PONER;
+"borrar"                return BORRAR;
+"horizontal"            return HORIZONTAL;
+"vertical"              return VERTICAL;
+"pausa"                 return PAUSA;
 
-"cuadrado"             return CUADRADO;
-"rectangulo"           return RECTANGULO;
-"circulo"              return CIRCULO;
+"si"                    return SI;
+"si_no"                 return SI_NO;
+"repetir"               return REPE;
+"{"                     return LLLAVE;
+"}"                     return RLLAVE;
 
-"rojo"                 return ROJO;
-"verde"                return VERDE;
-"azul"                 return AZUL;
-"naranja"              return NARANJA;
-"marron"               return MARRON;
-"amarillo"             return AMARILLO;
-"negro"                return NEGRO;
-"gris"                 return GRIS;
+"cuadrado"              return CUADRADO;
+"rectangulo"            return RECTANGULO;
+"circulo"               return CIRCULO;
 
-":="                   return ASIGNACION;
-","                    return COMA;
-"("                    return PAR_IZQ;
-")"                    return PAR_DER;
-"<"                    return MENOR;
-">"                    return MAYOR;
+"rojo"                  return T_ROJO;
+"verde"                 return T_VERDE;
+"azul"                  return T_AZUL;
+"naranja"               return T_NARANJA;
+"marron"                return T_MARRON;
+"amarillo"              return T_AMARILLO;
+"negro"                 return T_NEGRO;
+"gris"                  return T_GRIS;
 
-"+"                    return '+';
-"-"                    return '-';
-"*"                    return '*';
-"/"                    return '/';
-"=="                   return IGUAL;
-"&&"                   return AND;
+":="                    return ASIGNACION;
+","                     return COMA;
+"("                     return PAR_IZQ;
+")"                     return PAR_DER;
+"<"                     return MENOR;
+">"                     return MAYOR;
 
-"cierto"               return TRUE;
-"falso"                return FALSE;
+"+"                     return '+';
+"-"                     return '-';
+"*"                     return '*';
+"/"                     return '/';
+"=="                    return IGUAL;
+"&&"                    return AND;
 
-\"[^\"]*\"             { yylval.str = strdup(yytext); return CADENA; }
-[0-9]+\.[0-9]*         { yylval.real = atof(yytext); return NUMREAL; }  /* por ejemplo: 3.3 o 4.*/
-\.[0-9]+                { yylval.real = atof(yytext); return NUMREAL; } /* por ejemplo: .3 */
-[0-9]+                 { yylval.entero = atoi(yytext); return NUM; }
-[a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFICADOR; }
+"cierto"                return TRUE;
+"falso"                 return FALSE;
 
-.                      return yytext[0];
+\"[^\"]*\"              { 
+                          /* Copiamos la cadena (incluidas comillas) al array fijo */
+                          copiar_str(yylval.str, yytext); 
+                          return CADENA; 
+                        }
+
+[0-9]+\.[0-9]* { yylval.real = atof(yytext); return NUMREAL; }
+\.[0-9]+                { yylval.real = atof(yytext); return NUMREAL; }
+[0-9]+                  { yylval.entero = atoi(yytext); return NUM; }
+
+[a-zA-Z_][a-zA-Z0-9_]* { 
+                          /* Copiamos el nombre de la variable al array fijo */
+                          copiar_str(yylval.str, yytext); 
+                          return IDENTIFICADOR; 
+                        }
+
+.                       return yytext[0];
 
 %%
 
-int yywrap() {
-    return 1;
-}
+int yywrap() { return 1; }

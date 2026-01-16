@@ -1,59 +1,65 @@
 #ifndef TABLA_SIMBOLOS_H
 #define TABLA_SIMBOLOS_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h> 
+#include <stdbool.h>
 
-#define MAX_SIMBOLOS 100
+/* === CONSTANTES DE TIPOS === */
+#define T_ENTERO 0
+#define T_REAL 1
+#define T_BOOL 2
+#define T_FIGURA 3
 
-// Tipos de datos soportados
-typedef enum {
-    T_ENTERO = 0,
-    T_REAL = 1,
-    T_BOOL = 2,
-    T_CADENA = 3,
-    T_FIGURA = 4  // figuras
-} tipo_dato;
+/* === SUBTIPOS DE FIGURA === */
+#define F_CUADRADO 0
+#define F_RECTANGULO 1
+#define F_CIRCULO 2
 
-// Tipos de figuras
-typedef enum { F_CUADRADO, F_RECTANGULO, F_CIRCULO } tipo_forma;
-
-typedef char tipo_cadena[50];
-
-// Estructura para guardar la info de una figura
+/* STRUCT INFO_FIGURA:
+   Ahora guardamos VALORES (floats), no texto. 
+   Cuando definas "Cuad := ...", calcularemos sus posiciones y las guardaremos aquí.
+*/
 typedef struct {
-    tipo_forma subtipo;
-    tipo_cadena p1, p2, p3, p4; // Parámetros como texto (x, y, ancho...)
-    tipo_cadena color;
+    int subtipo;      // F_CUADRADO, etc.
+    float p1;         // Fila (Y) calculada
+    float p2;         // Columna (X) calculada
+    float p3;         // Dimensión 1 (lado/radio/alto)
+    float p4;         // Dimensión 2 (ancho, solo rectangulo)
+    char color[20];   // Color como texto ("ROJO")
 } info_figura;
 
-// El valor cambia según el tipo 
+/* UNION VALOR:
+   El espacio de memoria compartido. 
+   O guardas un entero, o un real, o una figura completa.
+*/
 typedef union {
-    int valor_entero;
-    float valor_real;
-    bool valor_bool;
-    tipo_cadena valor_cad;
-    info_figura valor_figura; // guardar figuras
+    int valor_entero;       // Para Enteros y Booleanos
+    float valor_real;       // Para Reales
+    info_figura valor_figura; 
 } tipo_valor;
 
-// EL DATO DE LA TABLA 
+/* ENTRADA DE LA TABLA:
+   Usamos arrays fijos para el nombre (char[100]) para evitar malloc/punteros.
+*/
 typedef struct {
-    tipo_cadena identificador;
-    tipo_dato tipo;
-    tipo_valor valor;
+    char identificador[100]; 
+    int tipo;                // T_ENTERO, T_REAL...
+    tipo_valor valor;        // El contenido real de la variable
 } tipo_datoTS;
 
-// LA TABLA COMPLETA
+/* TABLA DE SÍMBOLOS:
+   Array simple de 100 elementos (según enunciado).
+*/
 typedef struct {
-    tipo_datoTS simbolos[MAX_SIMBOLOS];
+    tipo_datoTS simbolos[100];
     int num_elementos;
 } tipo_tabla;
 
+/* Funciones */
+void iniciar(tipo_tabla *t);
+bool insertar(tipo_tabla *t, tipo_datoTS d);
+bool buscar(tipo_tabla t, char *nombre, tipo_datoTS *res);
 
-// funciones basicas
-void iniciar(tipo_tabla *TS);
-int insertar(tipo_tabla *TS, tipo_datoTS dato); 
-int buscar(tipo_tabla TS, const char *nombre, tipo_datoTS *dato);
+/* Función nueva para el intérprete: Actualizar un valor existente */
+void actualizar(tipo_tabla *t, char *nombre, tipo_valor nuevo_valor, int nuevo_tipo);
 
 #endif

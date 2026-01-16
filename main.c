@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "tabla_simbolos.h"
+#include "imagen.h" /* Asumiendo que imagen.h incluye allegro.h */
 
 extern int yyparse();
 extern FILE* yyin;
@@ -8,39 +9,29 @@ tipo_tabla TS;
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        printf("Uso: %s archivo.ima\n", argv[0]);
+        printf("Uso: ./imagen archivo.ima\n");
         return 1;
     }
 
     yyin = fopen(argv[1], "r");
     if (!yyin) {
-        perror("Error abriendo el archivo");
+        perror("Error al abrir archivo");
         return 1;
     }
 
-    // Inicializamos la tabla de simbolos
+    // 1. Iniciar Tabla de Símbolos
     iniciar(&TS);
 
-    // 2. IMPRIMIMOS LA CABECERA DEL CÓDIGO C++
-    // Esto es lo que permite que el output sea un programa válido
-    printf("// Codigo generado por el traductor IMAGEN\n");
-    printf("#include \"imagen.h\"\n");
-    printf("#include <allegro5/allegro5.h>\n\n");
-    printf("using namespace std;\n\n");
-    
-    printf("int main() {\n");
-    printf("    // Iniciar entorno grafico\n");
-    printf("    iniciarImagen();\n\n");
+    // 2. Iniciar Entorno Gráfico (Allegro)
+    // Esto abrirá la ventana principal o preparará el sistema
+    iniciarImagen();
 
-    // El parser generara el codigo c++
+    // 3. Ejecutar Intérprete (Aquí se abrirán las ventanas y dibujarán)
     yyparse();
 
-
-    printf("\n    // Finalizar entorno grafico\n");
-    printf("    terminarImagen();\n");
-    printf("    return 0;\n");
-    printf("}\n");
-
+    // 4. Cerrar
+    terminarImagen();
+    
     fclose(yyin);
     return 0;
 }
