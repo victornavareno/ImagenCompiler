@@ -65,6 +65,7 @@ void copiar_str(char* destino, const char* origen) {
 "*"                     return '*';
 "/"                     return '/';
 "=="                    return IGUAL;
+"||"                    return OR;
 "&&"                    return AND;
 
 "cierto"                return TRUE;

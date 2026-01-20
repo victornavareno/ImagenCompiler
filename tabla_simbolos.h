@@ -14,10 +14,7 @@
 #define F_RECTANGULO 1
 #define F_CIRCULO 2
 
-/* STRUCT INFO_FIGURA:
-   Ahora guardamos VALORES (floats), no texto. 
-   Cuando definas "Cuad := ...", calcularemos sus posiciones y las guardaremos aquí.
-*/
+/* STRUCT INFO_FIGURA */
 typedef struct {
     int subtipo;      // F_CUADRADO, etc.
     float p1;         // Fila (Y) calculada
@@ -27,9 +24,8 @@ typedef struct {
     char color[20];   // Color como texto ("ROJO")
 } info_figura;
 
-/* UNION VALOR:
-   El espacio de memoria compartido. 
-   O guardas un entero, o un real, o una figura completa.
+/* 
+   O guardamos un ENTERO REAL O FIGURA
 */
 typedef union {
     int valor_entero;       // Para Enteros y Booleanos
@@ -37,8 +33,8 @@ typedef union {
     info_figura valor_figura; 
 } tipo_valor;
 
-/* ENTRADA DE LA TABLA:
-   Usamos arrays fijos para el nombre (char[100]) para evitar malloc/punteros.
+/* 
+   Usamos arrays fijos para el nombre (char[100]) 
 */
 typedef struct {
     char identificador[100]; 
@@ -46,8 +42,8 @@ typedef struct {
     tipo_valor valor;        // El contenido real de la variable
 } tipo_datoTS;
 
-/* TABLA DE SÍMBOLOS:
-   Array simple de 100 elementos (según enunciado).
+/* 
+   TABLA DE SIMBOLOS
 */
 typedef struct {
     tipo_datoTS simbolos[100];
@@ -58,8 +54,6 @@ typedef struct {
 void iniciar(tipo_tabla *t);
 bool insertar(tipo_tabla *t, tipo_datoTS d);
 bool buscar(tipo_tabla t, char *nombre, tipo_datoTS *res);
-
-/* Función nueva para el intérprete: Actualizar un valor existente */
-void actualizar(tipo_tabla *t, char *nombre, tipo_valor nuevo_valor, int nuevo_tipo);
+void actualizar(tipo_tabla *t, char *nombre, tipo_valor nuevo_valor, int nuevo_tipo); // ESTO ES NUEVO AL SER INTERPRETE
 
 #endif

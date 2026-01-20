@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdbool.h> 
 
-/* Incluimos la librería gráfica para pintar YA */
 #include "imagen.h" 
 #include "tabla_simbolos.h"
 
@@ -12,14 +11,13 @@ extern int yylineno;
 int yylex(void);
 void yyerror(const char *s);
 
-/* La Tabla de Símbolos: Nuestra Memoria RAM */
+/* TABLA DE SIMBOLOS */
 extern tipo_tabla TS;
 
-/* Función auxiliar para mapear el texto "rojo" al código de color de Allegro */
+/* Funcion para mapear el texto "rojo" al código de color de Allegro */
 /* Asumimos que imagen.h define constantes o usamos las de Allegro */
 int obtener_color(char* nombre_color) {
     // Nota: Estas constantes deben coincidir con las que use imagen.h/allegro
-    // Si imagen.h usa ROJO, VERDE, etc, perfecto.
     if (strcmp(nombre_color, "ROJO") == 0) return ROJO;
     if (strcmp(nombre_color, "VERDE") == 0) return VERDE;
     if (strcmp(nombre_color, "AZUL") == 0) return AZUL;
@@ -31,19 +29,19 @@ int obtener_color(char* nombre_color) {
 }
 %}
 
-/* DEFINIMOS EL STRUCT DENTRO DEL UNION PARA GESTIONAR TIPOS (BANDERA) */
+/* DEFINIMOS EL STRUCT DENTRO DEL UNION PARA GESTIONAR TIPOS  */
 %code requires {
     typedef struct {
-        float valor;   // El número (sea entero o real, lo guardamos como float para operar)
-        int tipo;      // T_ENTERO o T_REAL (La bandera semántica)
+        float valor;   // El numero (sea entero o real, lo guardamos como float)
+        int tipo;      // T_ENTERO o T_REAL la bandera
     } info_expr;
 }
 
 %union {
     char str[100];     // Para nombres (arrays fijos)
-    int entero;        // Para números literales enteros
-    float real;        // Para números literales reales
-    info_expr expr;    // LA MOCHILA PARA EXPRESIONES (Valor + Bandera)
+    int entero;        // Para numeros enteros
+    float real;        // Para números reales
+    info_expr expr;    // PARA EXPRESIONES (Valor + Bandera)
 }
 
 /* Tokens */
@@ -58,12 +56,13 @@ int obtener_color(char* nombre_color) {
 %token T_ROJO T_VERDE T_AZUL T_NARANJA T_MARRON T_AMARILLO T_NEGRO T_GRIS
 
 %token SI SI_NO REPE LLLAVE RLLAVE
-%token TRUE FALSE IGUAL AND
+%token TRUE FALSE IGUAL AND OR
 %token MENOR MAYOR
 %token COMA PAR_IZQ PAR_DER ASIGNACION
 
 %left '+' '-'
 %left '*' '/'
+%left OR
 %left AND
 %nonassoc IGUAL
 %right UMINUS
@@ -98,7 +97,7 @@ declaracion:
         tipo_datoTS d; 
         strcpy(d.identificador, $2);
         
-        // Asignamos el tipo según lo que ha dicho la expresión (Bandera)
+        // Asignamos el tipo segun lo que ha dicho la bandera
         d.tipo = $4.tipo; 
         
         // Guardamos el valor en el hueco correcto del union
@@ -109,7 +108,6 @@ declaracion:
     }
   | IDENTIFICADOR ASIGNACION expresion saltos
     {
-        // Asignación posterior (x := x + 1)
         tipo_valor val;
         if ($3.tipo == T_ENTERO) val.valor_entero = (int)$3.valor;
         else val.valor_real = $3.valor;
@@ -123,7 +121,6 @@ tipo: ENTERO | REAL | BOOL ;
 lista_identificadores:
     IDENTIFICADOR
     {
-        // Declarar sin inicializar (basura o 0)
         tipo_datoTS d; strcpy(d.identificador, $1); d.tipo = T_ENTERO; d.valor.valor_entero = 0;
         insertar(&TS, d);
     }
@@ -179,28 +176,24 @@ color:
   | T_NEGRO { strcpy($$, "NEGRO"); } | T_GRIS { strcpy($$, "GRIS"); }
 ;
 
-/* === IMAGENES (EJECUCIÓN) === */
-/* Aquí abrimos ventanas y pintamos */
+/* === IMAGENES === */
+/* abrimos ventanas y pintamos */
 
 lista_imagenes: imagen opt_saltos | lista_imagenes imagen opt_saltos ;
 
 imagen:
     IMAGEN PAR_IZQ expresion COMA expresion COMA CADENA PAR_DER 
     {
-        // 1. Abrimos ventana
-        // Quitamos comillas a la cadena del título si es necesario
         nuevaVentanaImagen($7, (int)$3.valor, (int)$5.valor);
     }
     opt_saltos lista_acciones FINIMAGEN
     {
-        // 2. Pausa y cierre
         pausaImagen(1.5);
     }
 ;
 
 lista_acciones: instruccion opt_saltos | lista_acciones instruccion opt_saltos ;
 
-/* REGLA AUXILIAR PARA IF (Para que compile aunque no haga nada) */
 cabecera_si: SI PAR_IZQ expresion_booleana PAR_DER ;
 
 instruccion:
@@ -227,7 +220,6 @@ instruccion:
     {
          tipo_datoTS d;
          if (buscar(TS, $2, &d)) {
-             // Pintamos en BLANCO
              float f = d.valor.valor_figura.p1;
              float c = d.valor.valor_figura.p2;
              float dim1 = d.valor.valor_figura.p3;
@@ -243,17 +235,17 @@ instruccion:
     }
   | HORIZONTAL IDENTIFICADOR expresion
     {
-        // Actualizamos la coordenada X (p2) en memoria
+        // actualiza la coordenada X (p2) en memoria
         tipo_datoTS d;
         if (buscar(TS, $2, &d) && d.tipo == T_FIGURA) {
-            d.valor.valor_figura.p2 += $3.valor; // Sumar desplazamiento
-            // Guardamos el cambio en la tabla
+            d.valor.valor_figura.p2 += $3.valor; 
+            // guardamos en la tabla de simbolos
             actualizar(&TS, $2, d.valor, T_FIGURA);
         }
     }
   | VERTICAL IDENTIFICADOR expresion
     {
-        // Actualizamos la coordenada Y (p1) en memoria
+        // Actualizamos la coordenada Y  en memoria
         tipo_datoTS d;
         if (buscar(TS, $2, &d) && d.tipo == T_FIGURA) {
             d.valor.valor_figura.p1 += $3.valor; 
@@ -276,7 +268,7 @@ instruccion:
   | REPE expresion LLLAVE opt_saltos lista_acciones RLLAVE { /* Nada */ }
 ;
 
-/* === EXPRESIONES (LA LÓGICA DE TIPOS) === */
+/* === EXPRESIONES === */
 expresion:
       NUM 
       { 
@@ -337,6 +329,8 @@ expresion_booleana:
     | FALSE { $$ = 0; }
     | expresion IGUAL expresion { $$ = ($1.valor == $3.valor); }
     | expresion_booleana AND expresion_booleana { $$ = $1 && $3; }
+    | expresion_booleana OR expresion_booleana { $$ = $1 || $3; }
+
 ;
 
 %%
